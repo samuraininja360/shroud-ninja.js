@@ -8,11 +8,18 @@ const config = require('./config.json')
 
 
 const auth = "https://discord.com/oauth2/authorize?client_id=826698290312904715&permissions=4282379511&scope=bot"
-var prefix = "n!" || "ninja"
+var prefix = "n."
 var luck = Math.floor(Math.random()*10)
 var coinArray = []
 var userArray = []
+var xpArray = []
+var extraArray = [[],[],[],[],[],[],[],]
 var admin = ["samuraininja360#3847", "Ninja Spect#0959"]
+var multiplier = 50
+var jobs = [["Bartender",0,50,5],["Salesman",0,75,20],]
+var stuff = ["alcoholic", "aarya is amazing", "pink phallics", "obnoxious", "psuedonym", "argumentative", "racecar", "answer", "sllab amgil i", "lactose"]
+var word = undefined
+var answer = undefined
 
 function filterInt(value) {
   if (/^[-+]?(\d+|Infinity)$/.test(value)) {
@@ -36,6 +43,18 @@ db.get("users").then(users => {
   }
   userArray = users
 })
+db.get("xp").then(xp => {
+  if (!xp || xp.length < 1) {
+    db.set("xp", xpArray)
+  }
+  xpArray = xp
+})
+db.get("extra").then(extra => {
+  if (!extra || extra.length < 1) {
+    db.set("extra", extraArray)
+  }
+  extraArray = extra
+})
 function updateUsers(user) {
   db.get("users").then(users =>{
     users.push(user)
@@ -47,6 +66,8 @@ function resetData() {
   db.set("coins", coinArray)
   userArray = []
   db.set("users", userArray)
+  xpArray = []
+  db.set("xp", xpArray)
 }
 function setUsers(array) {
   db.get("users").then(users => {
@@ -58,7 +79,16 @@ function setCoins(array) {
     db.set("coins", array)
   })
 }
-
+function setXp(array) {
+  db.get("xp").then(xp => {
+    db.set("xp", array)
+  })
+}
+function setExtra(array) {
+  db.get("extra").then(extra => {
+    db.set("extra", array)
+  })
+}
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
@@ -79,6 +109,11 @@ client.on("message", msg => {
     /*db.get("users").then(users => {
       userArray = users
     })*/
+    if (word) {
+      if (false) {
+        
+      }
+    }
     if (command === "help") {
       msg.reply("Welcome to The Shroud Ninja\'s Arena!")
       msg.channel.send(`This game is still under development but you can still play!\nUse ${prefix}init to open your account; it saves your progress!\n\nUse ${prefix}beg to beg for money so you can purchase items and invest\nUse ${prefix}joblist to search for a job\nUse ${prefix}rob to rob someone\nUse ${prefix}buy to buy something from the shop\nThere are other fun Easter Egg commands for geeks ${prefix}avatar`)
@@ -93,14 +128,28 @@ client.on("message", msg => {
     } else if (command === "yeet") {
       msg.reply("Yeeeeet that!")
     } else if (command === "beg") {
+      multiplier = Math.round(xpArray[userArray.indexOf(msg.author.tag)]/10)
+      console.log(multiplier)
       if (userArray.includes(msg.author.tag)) {
-        luck = Math.floor(Math.random()*10)
+        luck = Math.floor(Math.random()*multiplier)
       if (luck === 0) {
-        msg.reply(`LOL! You got no coins. Imagine begging.`)
+        const bad = new Discord.MessageEmbed()
+          .setColor("#ff0032")
+          .setTitle("Ha Shame!")
+          .setDescription(`You got no coins. Imagine Begging LOL`)
+        msg.reply(bad)
       } else if (luck === 1) {
-        msg.reply(`You only got ${luck} coin`)
+        const ok = new Discord.MessageEmbed()
+          .setColor("#0064ff")
+          .setTitle("Better than nothing...")
+          .setDescription(`You only got ${luck} coin\nThis is your new balance ${coinArray[userArray.indexOf(msg.author.tag)]+luck}`)
+        msg.reply(ok)
       } else {
-        msg.reply(`You got ${luck} coins`)
+        const success = new Discord.MessageEmbed()
+          .setColor("#00b428")
+          .setTitle("What a miracle!")
+          .setDescription(`You got ${luck} coins\nThis is your new balance: ${coinArray[userArray.indexOf(msg.author.tag)]+luck}`)
+        msg.reply(success)
       }
       for (i=0;i<userArray.length;i++) {
         if (msg.author.tag === userArray[i]) {
@@ -108,10 +157,12 @@ client.on("message", msg => {
           console.log(coinArray)
         }
       }
+      xpArray[userArray.indexOf(msg.author.tag)] += (Math.floor(Math.random()*10))-5
       setCoins(coinArray)
       db.get("coins").then(coins => {
         console.log(coins)
       })
+      console.log(luck)
       } else {
         msg.reply("You need to open an account with init")
       }
@@ -141,10 +192,18 @@ client.on("message", msg => {
       })*/
         if (!userArray.includes(msg.author.tag)) {
           userArray.push(msg.author.tag)
-          msg.reply(userArray)
+          const success = new Discord.MessageEmbed()
+            .setColor("#00b428")
+            .setTitle("Success!")
+            .setDescription(`Your account was successfuly created!\nNow you can save your coins and use all commands!`)
+          msg.reply(success)
           setUsers(userArray)
           coinArray.push(100)
           setCoins(coinArray)
+          xpArray.push(100)
+          setXp(xpArray)
+          extraArray.push([])
+          setExtra(extraArray)
         } else {
           msg.reply("You're account has already been opened")
         }
@@ -190,8 +249,43 @@ client.on("message", msg => {
       const joblist = new Discord.MessageEmbed()
         .setColor("#0064ff")
         .setTitle("Available Jobs")
-        .setDescription("Pick one of the following jobs to start working and get a salary\nHigher paying jobs ususally have harder tasks to accompany\nthem! So choose wisely")
+        .setDescription("Pick one of the following jobs to start working and get a salary\nHigher paying jobs ususally have harder tasks to accompany\nthem! So choose wisely...")
+        .addField("How to work", `Use ${prefix}work to collect your work salary!`)
+        .setFooter("Get that blue collar on!")
+      for (i=0;i<jobs.length;i++) {
+          let temp = jobs[i]
+          joblist.addField(temp[0],`Daily salary: ${temp[1]}, Work salary: ${temp[2]}`)
+      }
       msg.channel.send(joblist)
+      for (i=0;i<jobs.length;i++) {
+        let temp = jobs[i]
+        if (temp[0] === params[0]) {
+          let target = extraArray[userArray.indexOf(msg.author.tag)]
+          target[0] = params[0]
+          setExtra(extraArray)
+        }
+      }
+    } else if (command === "xp") {
+      msg.reply(`Player experience points: ${xpArray}`)
+      db.get("xp").then(xp => {
+        console.log(xp)
+      })
+    } else if (command === "work") {
+      word = stuff[Math.floor(Math.random()*10)]
+      answer = word.split(" ").reverse().join(" ")
+      let info = extraArray[userArray.indexOf(msg.author.tag)]
+      if (info[0]) {  
+        msg.reply(`Type this word backwards: ${word}`)
+      }
+    } else if (command === "profile") {
+      let target = extraArray[userArray.indexOf(msg.author.tag)]
+      const profile = new Discord.MessageEmbed()
+        .setColor("#0064ff")
+        .setTitle("Your Profile!")
+        .setDescription(`Occupation: ${target[0]}`)
+      msg.reply(profile)
+    } else if (command === "ids") {
+      msg.reply(extraArray)
     }
     
   }
