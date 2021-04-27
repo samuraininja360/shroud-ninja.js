@@ -20,6 +20,7 @@ var jobs = [["Bartender",0,50,5],["Salesman",0,75,20],]
 var stuff = ["alcoholic", "aarya is amazing", "pink phallics", "obnoxious", "psuedonym", "argumentative", "racecar", "answer", "sllab amgil i", "lactose"]
 var word = undefined
 var answer = undefined
+var tick = 0
 
 function filterInt(value) {
   if (/^[-+]?(\d+|Infinity)$/.test(value)) {
@@ -27,6 +28,11 @@ function filterInt(value) {
   } else {
     return NaN
   }
+}
+
+function update() {
+  tick+=1
+  setTimeout(update, 1000)
 }
 
 db.get("coins").then(coins => {
@@ -92,6 +98,7 @@ function setExtra(array) {
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
+
 client.on("message", msg => {
   if (msg.author.bot) {
     return
@@ -167,10 +174,9 @@ client.on("message", msg => {
         msg.reply("You need to open an account with init")
       }
     } else if (command === "users") {
-      msg.reply(`Users:`)
       db.get("users").then(users => {
         if (true) {
-          msg.reply(users)
+          msg.reply(`Users: ${users}`)
         }
       })
     } else if (command === "avatar") {
@@ -274,15 +280,20 @@ client.on("message", msg => {
       word = stuff[Math.floor(Math.random()*10)]
       answer = word.split(" ").reverse().join(" ")
       let info = extraArray[userArray.indexOf(msg.author.tag)]
+      let job = 0
       if (info[0]) {  
         msg.reply(`Type this word backwards: ${word}`)
       }
+      msg.reply(`Here is your hourly payment:`)
+      coinArray[userArray.indexOf(msg.author.tag)] += 0
     } else if (command === "profile") {
       let target = extraArray[userArray.indexOf(msg.author.tag)]
+      let experience = xpArray[userArray.indexOf(msg.author.tag)]
+      let username = userArray[userArray.indexOf(msg.author.tag)]
       const profile = new Discord.MessageEmbed()
         .setColor("#0064ff")
-        .setTitle("Your Profile!")
-        .setDescription(`Occupation: ${target[0]}`)
+        .setTitle(`${username.substr(0,username.length-5)}`)
+        .setDescription(`Occupation: ${target[0]}\nLevel: ${experience}xp`)
       msg.reply(profile)
     } else if (command === "ids") {
       msg.reply(extraArray)
@@ -291,5 +302,6 @@ client.on("message", msg => {
   }
 })
 
+update()
 keepAlive()
 client.login(process.env.TOKEN)
